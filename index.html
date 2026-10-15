@@ -19,6 +19,39 @@
     </div>
   </header>
 
+  <details class="date-settings">
+    <summary>Update date ranges</summary>
+    <form id="dates-form">
+      <div class="date-settings-grid">
+        <fieldset>
+          <legend>Pay period 1</legend>
+          <label>Start <input type="date" id="period-0-start" required></label>
+          <label>End <input type="date" id="period-0-end" required></label>
+        </fieldset>
+        <fieldset>
+          <legend>Pay period 2</legend>
+          <label>Start <input type="date" id="period-1-start" required></label>
+          <label>End <input type="date" id="period-1-end" required></label>
+        </fieldset>
+        <fieldset>
+          <legend>Pay period 3</legend>
+          <label>Start <input type="date" id="period-2-start" required></label>
+          <label>End <input type="date" id="period-2-end" required></label>
+        </fieldset>
+        <fieldset>
+          <legend>FLSA work period</legend>
+          <label>Start <input type="date" id="flsa-start" required></label>
+          <label>End <input type="date" id="flsa-end" required></label>
+          <small class="date-help">As in the workbook, FLSA hours are counted from the day after Start through End.</small>
+        </fieldset>
+      </div>
+      <div class="date-settings-actions">
+        <button type="submit">Apply dates</button>
+        <p id="dates-error" class="date-error" role="alert"></p>
+      </div>
+    </form>
+  </details>
+
   <main id="periods"></main>
 
   <section class="card" id="flsa" aria-labelledby="flsa-title">

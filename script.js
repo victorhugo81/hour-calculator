@@ -7,14 +7,15 @@
   const REGULAR_BASE = 112;      // REGULAR = 112 - LEAVE
   const FLSA_THRESHOLD = 182;    // OT 1/2 = FLSA regular hours - 182
   const STORAGE_KEY = 'fire-timesheet-v1';
+  const DATES_STORAGE_KEY = 'fire-timesheet-dates-v1';
 
-  const PERIODS = [
+  const DEFAULT_PERIODS = [
     { start: '2026-08-15', end: '2026-08-28' },
     { start: '2026-08-29', end: '2026-09-11' },
     { start: '2026-09-12', end: '2026-09-25', usesFlsa: true }
   ];
   // Workbook: FLSA 08-19 .. 09-12, with the 24 listed days starting the day after the first date.
-  const FLSA = { start: '2026-08-19', end: '2026-09-12' };
+  const DEFAULT_FLSA = { start: '2026-08-19', end: '2026-09-12' };
 
   // Input columns (workbook columns C..I)
   const COLS = [
@@ -37,8 +38,34 @@
   const fmtDay = iso => `${WD[new Date(parse(iso)).getUTCDay()]} ${fmtShort(iso).slice(0, 5)}`;
   const range = (a, b) => { const out = []; for (let t = parse(a); t <= parse(b); t += DAY) out.push(toIso(t)); return out; };
 
-  PERIODS.forEach(p => { p.days = range(p.start, p.end); });
-  const FLSA_DAYS = range(toIso(parse(FLSA.start) + DAY), FLSA.end);
+  function loadDates() {
+    try {
+      const dates = JSON.parse(localStorage.getItem(DATES_STORAGE_KEY));
+      if (Array.isArray(dates.periods) && dates.periods.length === DEFAULT_PERIODS.length &&
+          dates.periods.every(p => isValidDate(p.start) && isValidDate(p.end) && p.start <= p.end) &&
+          dates.flsa && isValidDate(dates.flsa.start) && isValidDate(dates.flsa.end) &&
+          dates.flsa.start < dates.flsa.end) {
+        return dates;
+      }
+    } catch (e) { /* storage unavailable or invalid — use defaults */ }
+    return { periods: DEFAULT_PERIODS.map(({ start, end }) => ({ start, end })), flsa: { ...DEFAULT_FLSA } };
+  }
+  function isValidDate(iso) {
+    if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+    const ms = parse(iso);
+    return Number.isFinite(ms) && toIso(ms) === iso;
+  }
+
+  const dates = loadDates();
+  let PERIODS = dates.periods.map((p, i) => ({ ...p, usesFlsa: i === 2, days: [] }));
+  let FLSA = { ...dates.flsa };
+  let FLSA_DAYS = [];
+
+  function updateDays() {
+    PERIODS.forEach(p => { p.days = range(p.start, p.end); });
+    FLSA_DAYS = range(toIso(parse(FLSA.start) + DAY), FLSA.end);
+  }
+  updateDays();
 
   // ---- State: { 'YYYY-MM-DD': [7 numbers|null] } ----
   let state = load();
@@ -132,6 +159,7 @@
 
   function buildAll() {
     const host = $('#periods');
+    host.replaceChildren();
     PERIODS.forEach((p, n) => host.appendChild(buildPeriod(p, n)));
 
     // FLSA chips
@@ -189,9 +217,60 @@
   });
   $('#btn-print').addEventListener('click', () => window.print());
 
+  const datesForm = $('#dates-form');
+  const dateInput = id => $(`#${id}`);
+  function fillDateInputs() {
+    PERIODS.forEach((p, i) => {
+      dateInput(`period-${i}-start`).value = p.start;
+      dateInput(`period-${i}-end`).value = p.end;
+    });
+    dateInput('flsa-start').value = FLSA.start;
+    dateInput('flsa-end').value = FLSA.end;
+  }
+
+  datesForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const nextPeriods = PERIODS.map((p, i) => ({
+      start: dateInput(`period-${i}-start`).value,
+      end: dateInput(`period-${i}-end`).value,
+      usesFlsa: p.usesFlsa
+    }));
+    const nextFlsa = { start: dateInput('flsa-start').value, end: dateInput('flsa-end').value };
+    const error = $('#dates-error');
+
+    if (nextPeriods.some(p => !isValidDate(p.start) || !isValidDate(p.end) || p.start > p.end)) {
+      error.textContent = 'Each pay period needs a valid start date on or before its end date.';
+      return;
+    }
+    if (nextPeriods.some((p, i) => i > 0 && p.start <= nextPeriods[i - 1].end)) {
+      error.textContent = 'Pay periods must be in order and must not overlap.';
+      return;
+    }
+    if (!isValidDate(nextFlsa.start) || !isValidDate(nextFlsa.end) || nextFlsa.start >= nextFlsa.end) {
+      error.textContent = 'The FLSA start date must be before its end date.';
+      return;
+    }
+
+    PERIODS = nextPeriods.map(p => ({ ...p, days: [] }));
+    FLSA = nextFlsa;
+    updateDays();
+    try {
+      localStorage.setItem(DATES_STORAGE_KEY, JSON.stringify({
+        periods: PERIODS.map(({ start, end }) => ({ start, end })),
+        flsa: FLSA
+      }));
+      error.textContent = '';
+    } catch (e) {
+      error.textContent = 'Dates were applied, but could not be saved in this browser.';
+    }
+    buildAll();
+    update();
+  });
+
+  fillDateInputs();
   buildAll();
   update();
 
   // Expose for testing
-  window.__fire = { periodTotals, flsaTotal, flsaOT, PERIODS };
+  window.__fire = { periodTotals, flsaTotal, flsaOT, get PERIODS() { return PERIODS; } };
 })();
