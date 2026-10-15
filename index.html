@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fire Timesheet</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="page-head">
+    <div>
+      <h1>Fire Timesheet</h1>
+      <p class="sub">Enter hours in the <span class="swatch" aria-hidden="true"></span>blue fields. Totals, pay-code summaries and the FLSA overtime calculation update automatically.</p>
+    </div>
+    <div class="toolbar">
+      <button type="button" id="btn-sample">Load sample data</button>
+      <button type="button" id="btn-clear">Clear all</button>
+      <button type="button" id="btn-print">Print</button>
+    </div>
+  </header>
+
+  <main id="periods"></main>
+
+  <section class="card" id="flsa" aria-labelledby="flsa-title">
+    <h2 id="flsa-title">FLSA work period</h2>
+    <p class="meta" id="flsa-meta"></p>
+    <div class="flsa-grid" id="flsa-grid"></div>
+    <dl class="flsa-result">
+      <div><dt>Regular hours in period</dt><dd id="flsa-total">0</dd></div>
+      <div><dt>Threshold</dt><dd id="flsa-threshold">182</dd></div>
+      <div class="hl"><dt>OT ½ rate hours</dt><dd id="flsa-ot">0</dd></div>
+    </dl>
+    <p class="note">OT ½ = regular hours in the FLSA period minus the threshold (never below 0). It feeds the “O/T ½ rate” total of the last pay period.</p>
+  </section>
+
+  <script>window.SAMPLE_DATA = {"2026-08-15":[8,null,null,null,8,null,null],"2026-08-19":[16,null,null,null,16,null,null],"2026-08-20":[24,null,null,null,8,null,null],"2026-08-21":[8,16,null,null,18,null,null],"2026-08-22":[null,24,null,null,24,null,null],"2026-08-23":[null,24,null,null,24,null,null],"2026-08-24":[null,24,null,null,24,null,null],"2026-08-25":[16,8,null,null,24,null,null],"2026-08-26":[24,null,null,null,24,null,null],"2026-08-27":[8,16,null,null,24,null,null],"2026-08-28":[null,24,null,null,24,null,null],"2026-08-29":[null,24,null,null,24,null,null],"2026-08-30":[null,24,null,null,24,null,null],"2026-08-31":[16,8,null,null,24,null,null],"2026-09-01":[24,null,null,null,24,null,null],"2026-09-02":[8,16,null,null,24,null,null],"2026-09-03":[null,24,null,null,24,null,null],"2026-09-04":[null,16,null,null,16,null,null],"2026-09-06":[16,null,null,null,null,null,null],"2026-09-07":[24,null,null,null,null,null,null],"2026-09-08":[8,null,null,null,null,null,null],"2026-09-11":[null,12,null,null,null,3,null],"2026-09-12":[16,8,null,null,null,null,null],"2026-09-13":[24,null,null,null,null,null,null],"2026-09-14":[8,null,null,null,null,null,null],"2026-09-16":[null,16,null,null,16,null,null],"2026-09-17":[null,11,null,null,8,3,null],"2026-09-18":[16,null,null,null,16,null,null],"2026-09-19":[24,null,null,null,24,null,null],"2026-09-20":[8,null,null,null,8,null,null],"2026-09-23":[null,4,null,null,null,null,null],"2026-09-24":[16,8,null,null,16,null,null],"2026-09-25":[20,null,null,null,20,null,4]};</script>
+  <script src="script.js"></script>
+</body>
+</html>
